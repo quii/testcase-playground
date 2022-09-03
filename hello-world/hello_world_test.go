@@ -55,7 +55,6 @@ func TestName(t *testing.T) {
 			t.Must.Equal("Hello, World", act(t))
 		})
 	})
-
 }
 
 func Greet(name string) string {
