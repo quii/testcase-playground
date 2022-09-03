@@ -1,7 +1,6 @@
 package shapes
 
 import (
-	"math"
 	"testing"
 
 	"github.com/adamluzsi/testcase"
@@ -21,12 +20,16 @@ func (r Rectangle) Perimeter() float64 {
 	return 2 * (r.Height + r.Width)
 }
 
-type Circle struct {
-	Radius float64
+type Square struct {
+	SideLength float64
 }
 
-func (c Circle) Area() float64 {
-	return math.Pi * c.Radius * c.Radius
+func (s Square) Area() float64 {
+	return s.SideLength * s.SideLength
+}
+
+func (s Square) Perimeter() float64 {
+	return 4 * s.SideLength
 }
 
 func TestShapes(t *testing.T) {
@@ -36,28 +39,60 @@ func TestShapes(t *testing.T) {
 		var (
 			width   = testcase.LetValue[float64](s, 12.0)
 			height  = testcase.LetValue[float64](s, 6.0)
-			subject = func(t *testcase.T) Rectangle {
+			subject = testcase.Let[Rectangle](s, func(t *testcase.T) Rectangle {
 				return Rectangle{Width: width.Get(t), Height: height.Get(t)}
-			}
+			})
 		)
 
 		s.When(".Area", func(s *testcase.Spec) {
-			act := func(t *testcase.T) float64 {
-				return subject(t).Area()
-			}
-			s.Then("it returns its area", func(t *testcase.T) {
-				assert.Equal(t, 72, act(t))
-			})
+			AreaSpec(s, subject, 72)
 		})
 
 		s.When(".Perimeter", func(s *testcase.Spec) {
-			act := func(t *testcase.T) float64 {
-				return subject(t).Perimeter()
-			}
-			s.Then("it returns its perimeter", func(t *testcase.T) {
-				assert.Equal(t, 36, act(t))
-			})
+			PerimeterSpec(s, subject, 36)
 		})
 	})
 
+	s.Describe("Square", func(s *testcase.Spec) {
+		var (
+			sideLength = testcase.LetValue[float64](s, 5)
+			subject    = testcase.Let[Square](s, func(t *testcase.T) Square {
+				return Square{SideLength: sideLength.Get(t)}
+			})
+		)
+
+		s.When(".Area", func(s *testcase.Spec) {
+			AreaSpec(s, subject, 25)
+		})
+
+		s.When(".Perimeter", func(s *testcase.Spec) {
+			PerimeterSpec(s, subject, 20)
+		})
+	})
+
+}
+
+type Shape interface {
+	Area() float64
+	Perimeter() float64
+}
+
+func AreaSpec[T Shape](s *testcase.Spec, shape testcase.Var[T], want float64) {
+	var act = func(t *testcase.T) float64 {
+		return shape.Get(t).Area()
+	}
+
+	s.Then(`it has an area of`, func(t *testcase.T) {
+		assert.Must(t).Equal(want, act(t))
+	})
+}
+
+func PerimeterSpec[T Shape](s *testcase.Spec, shape testcase.Var[T], want float64) {
+	var act = func(t *testcase.T) float64 {
+		return shape.Get(t).Perimeter()
+	}
+
+	s.Then(`it has a perimeter of`, func(t *testcase.T) {
+		assert.Must(t).Equal(want, act(t))
+	})
 }
